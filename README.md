@@ -1,4 +1,4 @@
-# TranscribeAI 🎙️
+# Transcribe AI 🎙️
 
 Servidor local de transcripción de video y audio con IA. Usa [Whisper](https://github.com/openai/whisper) de OpenAI acelerado por GPU para transcribir cualquier video o audio en 99 idiomas, completamente **gratis** y **sin enviar datos a ningún servidor externo**.
 
