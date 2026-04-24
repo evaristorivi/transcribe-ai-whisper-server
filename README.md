@@ -38,8 +38,8 @@ Servidor local de transcripción de video y audio con IA. Usa [Whisper](https://
 ### 1. Clona el repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/transcribeai.git
-cd transcribeai
+git clone https://github.com/evaristorivi/transcribe-ai-whisper-server.git
+cd transcribe-ai-whisper-server
 ```
 
 ### 2. Instala ffmpeg
@@ -139,7 +139,7 @@ uvicorn.run(app, host="0.0.0.0", port=8080)  # cambia 8000 por el que quieras
 ## Estructura del proyecto
 
 ```
-transcribeai/
+transcribe-ai-whisper-server/
 ├── server.py          # Backend FastAPI + lógica de transcripción
 ├── static/
 │   └── index.html     # Frontend (interfaz web completa)
