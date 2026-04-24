@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TranscribeAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #06060f;
+      --surface: rgba(255,255,255,0.04);
+      --surface-2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --accent: #7c3aed;
+      --accent-2: #4f46e5;
+      --grad: linear-gradient(135deg, #7c3aed, #4f46e5);
+      --grad-text: linear-gradient(135deg, #a78bfa, #818cf8);
+      --text: #f1f5f9;
+      --text-2: #94a3b8;
+      --text-3: #64748b;
+      --success: #10b981;
+      --error: #f43f5e;
+      --warn: #f59e0b;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Ambient gradient background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(124,58,237,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 110%, rgba(79,70,229,0.15) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(6,6,15,0.85);
+      backdrop-filter: blur(20px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: var(--grad);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-text {
+      background: var(--grad-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .model-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      transition: all .3s;
+    }
+
+    .model-badge.ok { border-color: rgba(16,185,129,0.4); color: #34d399; background: rgba(16,185,129,0.08); }
+    .model-badge.err { border-color: rgba(244,63,94,0.4); color: #fb7185; background: rgba(244,63,94,0.08); }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--warn);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .dot.ok { background: var(--success); animation: none; }
+    .dot.err { background: var(--error); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(.8); }
+    }
+
+    /* Main */
+    main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 80px;
+      gap: 20px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .hero h1 {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.2;
+      background: var(--grad-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      margin-top: 10px;
+      color: var(--text-2);
+      font-size: 15px;
+    }
+
+    /* Card */
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+      transition: border-color .25s;
+    }
+
+    .card:hover { border-color: var(--border-hover); }
+
+    .card-inner { padding: 28px; }
+
+    /* Drop zone */
+    .drop-zone {
+      position: relative;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 56px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s;
+      background: transparent;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.06);
+    }
+
+    .drop-zone.drag-over .dz-icon { transform: scale(1.15); }
+
+    .drop-zone input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dz-icon {
+      margin: 0 auto 16px;
+      width: 52px;
+      height: 52px;
+      background: rgba(124,58,237,0.15);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    .dz-icon svg { color: #a78bfa; }
+
+    .dz-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .dz-sub {
+      font-size: 13px;
+      color: var(--text-3);
+    }
+
+    .dz-formats {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .fmt-tag {
+      padding: 3px 10px;
+      border-radius: 50px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 500;
+    }
+
+    /* File selected state */
+    .file-selected {
+      margin-top: 20px;
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .file-selected.show { display: flex; }
+
+    .file-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(124,58,237,0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-size { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color .2s;
+      display: flex;
+    }
+    .remove-btn:hover { color: var(--error); }
+
+    /* Options row */
+    .options-row {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .option-group {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+      transition: border-color .2s;
+      outline: none;
+    }
+
+    select:focus { border-color: var(--accent); }
+    select option { background: #1e1b4b; }
+
+    /* Transcribe button */
+    .btn-transcribe {
+      padding: 11px 28px;
+      background: var(--grad);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .25s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+    }
+
+    .btn-transcribe:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(124,58,237,0.5); }
+    .btn-transcribe:active { transform: translateY(0); }
+    .btn-transcribe:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Progress card */
+    .progress-section { padding: 28px; }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .progress-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .progress-pct {
+      font-size: 14px;
+      font-weight: 600;
+      color: #a78bfa;
+    }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 50px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--grad);
+      border-radius: 50px;
+      transition: width .4s ease;
+      width: 0%;
+    }
+
+    .progress-msg {
+      font-size: 13px;
+      color: var(--text-2);
+    }
+
+    /* Steps */
+    .steps {
+      margin-top: 24px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .step {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-3);
+      text-align: center;
+      transition: all .3s;
+    }
+
+    .step.active { border-color: rgba(124,58,237,0.5); color: #a78bfa; background: rgba(124,58,237,0.1); }
+    .step.done { border-color: rgba(16,185,129,0.4); color: #34d399; background: rgba(16,185,129,0.08); }
+
+    /* Result card */
+    .result-section { padding: 28px; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 50px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+
+    .meta-tag svg { opacity: .7; }
+
+    .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn-sm {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .2s;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-2);
+    }
+
+    .btn-sm:hover { border-color: var(--border-hover); color: var(--text); background: rgba(255,255,255,0.1); }
+    .btn-sm.primary { border-color: rgba(124,58,237,0.5); color: #a78bfa; background: rgba(124,58,237,0.1); }
+    .btn-sm.primary:hover { background: rgba(124,58,237,0.2); }
+
+    /* View toggle */
+    .view-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .view-btn {
+      flex: 1;
+      padding: 8px 16px;
+      background: none;
+      border: none;
+      color: var(--text-3);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .view-btn.active { background: var(--surface-2); color: var(--text); }
+    .view-btn:not(:last-child) { border-right: 1px solid var(--border); }
+
+    /* Text output */
+    .output-text {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 420px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    /* Segments view */
+    .segments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 420px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .segment {
+      display: flex;
+      gap: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      transition: background .15s;
+    }
+
+    .segment:hover { background: var(--surface-2); }
+
+    .seg-time {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #a78bfa;
+      font-variant-numeric: tabular-nums;
+      padding-top: 2px;
+      min-width: 100px;
+    }
+
+    .seg-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* New transcription button */
+    .btn-new {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: var(--radius-sm);
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text-3);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .2s;
+      width: 100%;
+    }
+
+    .btn-new:hover { border-color: var(--border-hover); color: var(--text-2); background: var(--surface-2); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 9999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .3s cubic-bezier(.34,1.56,.64,1);
+      border: 1px solid var(--border);
+      background: rgba(30,27,75,.95);
+      backdrop-filter: blur(20px);
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(16,185,129,.5); color: #34d399; }
+    .toast.error { border-color: rgba(244,63,94,.4); color: #fb7185; }
+
+    /* Utility */
+    .hidden { display: none !important; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </div>
+    <span class="logo-text">TranscribeAI</span>
+  </div>
+  <div class="model-badge" id="modelBadge">
+    <div class="dot" id="modelDot"></div>
+    <span id="modelLabel">Cargando modelo...</span>
+  </div>
+</header>
+
+<!-- Main -->
+<main>
+  <div class="hero">
+    <h1>Transcripción por IA</h1>
+    <p>Sube tu video o audio y obtén la transcripción completa · 99 idiomas · GPU local</p>
+  </div>
+
+  <!-- Upload Card -->
+  <div class="card" id="uploadCard">
+    <div class="card-inner">
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="video/*,audio/*,.mp4,.mp3,.wav,.avi,.mov,.mkv,.webm,.m4a,.ogg,.flac,.ts,.mts" />
+        <div class="dz-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="dz-title">Arrastra tu video o audio aquí</div>
+        <div class="dz-sub">o haz clic para seleccionar un archivo</div>
+        <div class="dz-formats">
+          <span class="fmt-tag">MP4</span>
+          <span class="fmt-tag">MKV</span>
+          <span class="fmt-tag">AVI</span>
+          <span class="fmt-tag">MOV</span>
+          <span class="fmt-tag">WEBM</span>
+          <span class="fmt-tag">MP3</span>
+          <span class="fmt-tag">WAV</span>
+          <span class="fmt-tag">M4A</span>
+          <span class="fmt-tag">FLAC</span>
+          <span class="fmt-tag">+más</span>
+        </div>
+      </div>
+
+      <!-- File selected -->
+      <div class="file-selected" id="fileSelected">
+        <div class="file-icon">
+          <svg width="18" height="18" fill="none" stroke="#a78bfa" stroke-width="2" viewBox="0 0 24 24">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>
+        <div class="file-info">
+          <div class="file-name" id="fileName">archivo.mp4</div>
+          <div class="file-size" id="fileSize">—</div>
+        </div>
+        <button class="remove-btn" id="removeBtn" title="Quitar archivo">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Options -->
+      <div class="options-row">
+        <div class="option-group">
+          <label>Idioma del audio</label>
+          <select id="languageSelect">
+            <option value="auto">🔍 Auto-detectar</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="pt">🇧🇷 Português</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="ko">🇰🇷 한국어</option>
+            <option value="zh">🇨🇳 中文</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="nl">🇳🇱 Nederlands</option>
+            <option value="pl">🇵🇱 Polski</option>
+            <option value="tr">🇹🇷 Türkçe</option>
+            <option value="uk">🇺🇦 Українська</option>
+            <option value="ca">Català</option>
+          </select>
+        </div>
+        <button class="btn-transcribe" id="transcribeBtn" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Transcribir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Card -->
+  <div class="card hidden" id="progressCard">
+    <div class="progress-section">
+      <div class="progress-header">
+        <div class="progress-title">Transcribiendo...</div>
+        <div class="progress-pct" id="progressPct">0%</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-msg" id="progressMsg">Iniciando...</div>
+      <div class="steps">
+        <div class="step" id="step1">📤 Subiendo</div>
+        <div class="step" id="step2">🔊 Analizando</div>
+        <div class="step" id="step3">✍️ Transcribiendo</div>
+        <div class="step" id="step4">✅ Listo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Card -->
+  <div class="card hidden" id="resultCard">
+    <div class="result-section">
+      <div class="result-header">
+        <div class="result-meta" id="resultMeta"></div>
+        <div class="result-actions">
+          <button class="btn-sm primary" id="copyBtn" onclick="copyText()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copiar
+          </button>
+          <button class="btn-sm" id="dlTxtBtn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            .txt
+          </button>
+          <button class="btn-sm" id="dlSrtBtn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            .srt
+          </button>
+        </div>
+      </div>
+
+      <div class="view-toggle">
+        <button class="view-btn active" id="viewFull" onclick="switchView('full')">Texto completo</button>
+        <button class="view-btn" id="viewSegs" onclick="switchView('segments')">Con timestamps</button>
+      </div>
+
+      <div class="output-text" id="outputText"></div>
+      <div class="segments-list hidden" id="outputSegments"></div>
+
+      <button class="btn-new" onclick="resetUI()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 .49-4.96"/>
+        </svg>
+        Nueva transcripción
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let currentFile = null;
+  let currentJobId = null;
+  let pollTimer = null;
+  let currentResult = null;
+
+  // ── Model health polling ──
+  async function checkModel() {
+    try {
+      const r = await fetch('/api/health');
+      const d = await r.json();
+      const dot = document.getElementById('modelDot');
+      const label = document.getElementById('modelLabel');
+      const badge = document.getElementById('modelBadge');
+
+      if (d.loaded) {
+        dot.className = 'dot ok';
+        badge.className = 'model-badge ok';
+        label.textContent = `${d.model} · ${d.device?.toUpperCase()}`;
+        document.getElementById('transcribeBtn').disabled = !currentFile;
+      } else if (d.loading) {
+        dot.className = 'dot';
+        badge.className = 'model-badge';
+        label.textContent = 'Cargando modelo...';
+        setTimeout(checkModel, 2000);
+      } else {
+        dot.className = 'dot err';
+        badge.className = 'model-badge err';
+        label.textContent = 'Error: ' + (d.error || 'modelo no disponible');
+      }
+    } catch {
+      setTimeout(checkModel, 3000);
+    }
+  }
+
+  checkModel();
+
+  // ── File handling ──
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) setFile(e.target.files[0]);
+  });
+
+  document.getElementById('removeBtn').addEventListener('click', () => {
+    currentFile = null;
+    fileInput.value = '';
+    document.getElementById('fileSelected').classList.remove('show');
+    document.getElementById('transcribeBtn').disabled = true;
+  });
+
+  function setFile(f) {
+    currentFile = f;
+    document.getElementById('fileName').textContent = f.name;
+    document.getElementById('fileSize').textContent = formatBytes(f.size);
+    document.getElementById('fileSelected').classList.add('show');
+    // Only enable if model is ready
+    const badge = document.getElementById('modelBadge');
+    document.getElementById('transcribeBtn').disabled = !badge.classList.contains('ok');
+  }
+
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  // ── Transcribe ──
+  document.getElementById('transcribeBtn').addEventListener('click', startTranscription);
+
+  async function startTranscription() {
+    if (!currentFile) return;
+
+    const lang = document.getElementById('languageSelect').value;
+    const formData = new FormData();
+    formData.append('file', currentFile);
+    formData.append('language', lang);
+
+    // Show progress
+    document.getElementById('uploadCard').classList.add('hidden');
+    document.getElementById('progressCard').classList.remove('hidden');
+    document.getElementById('resultCard').classList.add('hidden');
+    setStep(1);
+    setProgress(0, 'Subiendo archivo...');
+
+    try {
+      const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Error en el servidor');
+      }
+      const { job_id } = await res.json();
+      currentJobId = job_id;
+      setStep(2);
+      setProgress(10, 'Archivo recibido, analizando...');
+      pollStatus();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+      resetUI();
+    }
+  }
+
+  function pollStatus() {
+    pollTimer = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/status/${currentJobId}`);
+        const d = await r.json();
+
+        setProgress(d.progress, d.message);
+
+        if (d.progress > 10) setStep(3);
+
+        if (d.status === 'done') {
+          setStep(4);
+          setProgress(100, '¡Transcripción completada!');
+          await loadResult();
+        } else if (d.status === 'error') {
+          showToast('Error: ' + (d.message || 'Fallo en transcripción'), 'error');
+          resetUI();
+        } else {
+          pollStatus();
+        }
+      } catch {
+        pollStatus();
+      }
+    }, 800);
+  }
+
+  async function loadResult() {
+    const r = await fetch(`/api/result/${currentJobId}`);
+    currentResult = await r.json();
+
+    // Show result card
+    setTimeout(() => {
+      document.getElementById('progressCard').classList.add('hidden');
+      document.getElementById('resultCard').classList.remove('hidden');
+
+      // Meta tags
+      const meta = document.getElementById('resultMeta');
+      const langNames = { es:'Español', en:'English', pt:'Português', fr:'Français', de:'Deutsch', it:'Italiano', ja:'日本語', ko:'한국어', zh:'中文', ru:'Русский', ar:'العربية', nl:'Nederlands', pl:'Polski', tr:'Türkçe', uk:'Українська', ca:'Català' };
+      const lang = langNames[currentResult.language] || currentResult.language?.toUpperCase() || '?';
+      const dur = formatDuration(currentResult.duration);
+      const words = currentResult.text.split(/\s+/).filter(Boolean).length;
+      meta.innerHTML = `
+        <span class="meta-tag"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>${lang}</span>
+        <span class="meta-tag"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${dur}</span>
+        <span class="meta-tag"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>${words} palabras</span>
+      `;
+
+      // Full text view
+      document.getElementById('outputText').textContent = currentResult.text;
+
+      // Segments view
+      const segList = document.getElementById('outputSegments');
+      segList.innerHTML = '';
+      (currentResult.segments || []).forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'segment';
+        div.innerHTML = `<span class="seg-time">${fmtSec(s.start)} → ${fmtSec(s.end)}</span><span class="seg-text">${escHtml(s.text)}</span>`;
+        segList.appendChild(div);
+      });
+
+      // Download buttons
+      document.getElementById('dlTxtBtn').onclick = () => window.open(`/api/download/${currentJobId}?fmt=txt`);
+      document.getElementById('dlSrtBtn').onclick = () => window.open(`/api/download/${currentJobId}?fmt=srt`);
+
+      showToast('¡Transcripción lista!', 'success');
+    }, 400);
+  }
+
+  // ── Progress helpers ──
+  function setProgress(pct, msg) {
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+    document.getElementById('progressMsg').textContent = msg || '';
+  }
+
+  function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('step' + i);
+      el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    }
+  }
+
+  // ── View toggle ──
+  function switchView(v) {
+    document.getElementById('viewFull').classList.toggle('active', v === 'full');
+    document.getElementById('viewSegs').classList.toggle('active', v === 'segments');
+    document.getElementById('outputText').classList.toggle('hidden', v !== 'full');
+    document.getElementById('outputSegments').classList.toggle('hidden', v !== 'segments');
+  }
+
+  // ── Copy ──
+  async function copyText() {
+    if (!currentResult) return;
+    const isSegmentsView = document.getElementById('viewSegs').classList.contains('active');
+    let content;
+    if (isSegmentsView) {
+      content = (currentResult.segments || [])
+        .map(s => `[${fmtSec(s.start)} → ${fmtSec(s.end)}] ${s.text}`)
+        .join('\n');
+    } else {
+      content = currentResult.text;
+    }
+    try {
+      await navigator.clipboard.writeText(content);
+      showToast('Copiado al portapapeles', 'success');
+    } catch {
+      showToast('No se pudo copiar', 'error');
+    }
+  }
+
+  // ── Reset ──
+  function resetUI() {
+    currentFile = null;
+    currentJobId = null;
+    currentResult = null;
+    if (pollTimer) clearTimeout(pollTimer);
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileSelected').classList.remove('show');
+    document.getElementById('transcribeBtn').disabled = true;
+    document.getElementById('uploadCard').classList.remove('hidden');
+    document.getElementById('progressCard').classList.add('hidden');
+    document.getElementById('resultCard').classList.add('hidden');
+    setProgress(0, '');
+    setStep(0);
+  }
+
+  // ── Toast ──
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ── Utils ──
+  function formatDuration(s) {
+    if (!s) return '—';
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    return h ? `${h}h ${m}m ${sec}s` : m ? `${m}m ${sec}s` : `${sec}s`;
+  }
+
+  function fmtSec(s) {
+    const m = Math.floor(s / 60);
+    const sec = (s % 60).toFixed(1).padStart(4, '0');
+    return `${String(m).padStart(2,'0')}:${sec}`;
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
+</body>
+</html>

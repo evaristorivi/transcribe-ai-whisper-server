@@ -1,0 +1,47 @@
+# Entornos virtuales
+venv/
+env313/
+.venv/
+env/
+
+# Archivos subidos (nunca subir videos de usuarios)
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Modelos descargados (pesados, se descargan automáticamente)
+models/
+*.bin
+*.safetensors
+
+# Variables de entorno / secretos
+.env
+.env.local
+*.env
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+logs/
+
+# Temporales
+*.tmp
+*.bak
+tmp/
